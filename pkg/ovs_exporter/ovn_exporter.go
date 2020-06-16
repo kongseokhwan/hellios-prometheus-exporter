@@ -16,14 +16,15 @@ package ovn_exporter
 
 import (
 	//"github.com/davecgh/go-spew/spew"
-	"github.com/greenpau/ovsdb"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/log"
-	"github.com/prometheus/common/version"
 	_ "net/http/pprof"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/greenpau/ovsdb"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/log"
+	"github.com/prometheus/common/version"
 )
 
 const (
@@ -40,12 +41,14 @@ var (
 )
 
 var (
+	// TODO #1 : Define Data Structure
 	up = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "up"),
 		"Is OVN stack up (1) or is it down (0).",
 		nil, nil,
 	)
 	info = prometheus.NewDesc(
+		// func NewDesc(fqName, help string, variableLabels []string, constLabels Labels) *Desc {
 		prometheus.BuildFQName(namespace, "", "info"),
 		"This metric provides basic information about OVN stack. It is always set to 1.",
 		[]string{
@@ -288,6 +291,7 @@ func NewExporter(opts Options) (*Exporter, error) {
 	e := Exporter{
 		timeout: opts.Timeout,
 	}
+	// TODO : Change to Hellios Client
 	client := ovsdb.NewOvnClient()
 	client.Timeout = opts.Timeout
 	e.Client = client
@@ -306,6 +310,7 @@ func NewExporter(opts Options) (*Exporter, error) {
 
 // Describe describes all the metrics ever exported by the OVN exporter. It
 // implements prometheus.Collector.
+// TODO #2: Mapping Structure to prometheus channel
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- up
 	ch <- info
@@ -400,6 +405,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 // GatherMetrics collect data from OVN server and stores them
 // as Prometheus metrics.
+// TODO #3: Practical collect implementations
 func (e *Exporter) GatherMetrics() {
 	log.Debugf("%s: GatherMetrics() called", e.Client.System.ID)
 	if time.Now().Unix() < e.nextCollectionTicker {
@@ -445,9 +451,11 @@ func (e *Exporter) GatherMetrics() {
 			upValue = 0
 		}
 		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// TODO : func MustNewConstMetric(desc *Desc, valueType ValueType, value float64, labelValues ...string) Metric {
 			pid,
 			prometheus.GaugeValue,
 			float64(p.ID),
+			// []string{"system_id", "component", "user", "group"}, nil,
 			e.Client.System.ID,
 			component,
 			p.User,
