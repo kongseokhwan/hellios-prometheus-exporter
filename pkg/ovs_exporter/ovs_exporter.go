@@ -123,39 +123,14 @@ func (e *Exporter) IncrementErrorCounter() {
 // Collect implements prometheus.Collector.
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.GatherMetrics()
-	log.Debugf("%s: Collect() calls RLock()", e.Client.System.ID)
+	log.Debug("Collect() calls RLock()")
 	e.RLock()
 	defer e.RUnlock()
 	if len(e.metrics) == 0 {
-		log.Debugf("%s: Collect() no metrics found", e.Client.System.ID)
-		ch <- prometheus.MustNewConstMetric(
-			up,
-			prometheus.GaugeValue,
-			0,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			info,
-			prometheus.GaugeValue,
-			1,
-			e.Client.System.ID, e.Client.System.RunDir, e.Client.System.Hostname,
-			e.Client.System.Type, e.Client.System.Version,
-			e.Client.Database.Vswitch.Version, e.Client.Database.Vswitch.Schema.Version,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			requestErrors,
-			prometheus.CounterValue,
-			float64(e.errors),
-			e.Client.System.ID,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			nextPoll,
-			prometheus.CounterValue,
-			float64(e.nextCollectionTicker),
-			e.Client.System.ID,
-		)
+		log.Debug("Collect() no metrics found")
 		return
 	}
-	log.Debugf("%s: Collect() sends %d metrics to a shared channel", e.Client.System.ID, len(e.metrics))
+
 	for _, m := range e.metrics {
 		ch <- m
 	}
@@ -175,12 +150,10 @@ func (e *Exporter) GatherMetrics() {
 		e.metrics = e.metrics[:0]
 		log.Debug("GatherMetrics() cleared metrics")
 	}
-	upValue := 1
-	isClusterEnabled := false
 
 	var err error
 
-	ports, err := c.Client.OpenFlow.DumpPorts("br0")
+	ports, err := e.Client.OpenFlow.DumpPorts("br0")
 	if err != nil {
 		log.Error(err)
 	}
