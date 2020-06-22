@@ -26,28 +26,8 @@ func main() {
 	var databaseVswitchFileLogPath string
 	var databaseVswitchFilePidPath string
 	var databaseVswitchFileSystemIDPath string
-	var databaseNorthboundName string
-	var databaseNorthboundSocketRemote string
-	var databaseNorthboundSocketControl string
-	var databaseNorthboundFileDataPath string
-	var databaseNorthboundFileLogPath string
-	var databaseNorthboundFilePidPath string
-	var databaseNorthboundPortDefault int
-	var databaseNorthboundPortSsl int
-	var databaseNorthboundPortRaft int
-	var databaseSouthboundName string
-	var databaseSouthboundSocketRemote string
-	var databaseSouthboundSocketControl string
-	var databaseSouthboundFileDataPath string
-	var databaseSouthboundFileLogPath string
-	var databaseSouthboundFilePidPath string
-	var databaseSouthboundPortDefault int
-	var databaseSouthboundPortSsl int
-	var databaseSouthboundPortRaft int
 	var serviceVswitchdFileLogPath string
 	var serviceVswitchdFilePidPath string
-	var serviceNorthdFileLogPath string
-	var serviceNorthdFilePidPath string
 
 	flag.StringVar(&listenAddress, "web.listen-address", ":9476", "Address to listen on for web interface and telemetry.")
 	flag.StringVar(&metricsPath, "web.telemetry-path", "/metrics", "Path under which to expose metrics.")
@@ -65,37 +45,14 @@ func main() {
 	flag.StringVar(&databaseVswitchFilePidPath, "database.vswitch.file.pid.path", "/var/run/openvswitch/ovsdb-server.pid", "OVS db process id file.")
 	flag.StringVar(&databaseVswitchFileSystemIDPath, "database.vswitch.file.system.id.path", "/etc/openvswitch/system-id.conf", "OVS system id file.")
 
-	flag.StringVar(&databaseNorthboundName, "database.northbound.name", "ovs_Northbound", "The name of ovs NB (northbound) db.")
-	flag.StringVar(&databaseNorthboundSocketRemote, "database.northbound.socket.remote", "unix:/run/openvswitch/ovsnb_db.sock", "JSON-RPC unix socket to ovs NB db.")
-	flag.StringVar(&databaseNorthboundSocketControl, "database.northbound.socket.control", "unix:/run/openvswitch/ovsnb_db.ctl", "JSON-RPC unix socket to ovs NB app.")
-	flag.StringVar(&databaseNorthboundFileDataPath, "database.northbound.file.data.path", "/var/lib/openvswitch/ovsnb_db.db", "ovs NB db file.")
-	flag.StringVar(&databaseNorthboundFileLogPath, "database.northbound.file.log.path", "/var/log/openvswitch/ovsdb-server-nb.log", "ovs NB db log file.")
-	flag.StringVar(&databaseNorthboundFilePidPath, "database.northbound.file.pid.path", "/run/openvswitch/ovsnb_db.pid", "ovs NB db process id file.")
-	flag.IntVar(&databaseNorthboundPortDefault, "database.northbound.port.default", 6641, "ovs NB db network socket port.")
-	flag.IntVar(&databaseNorthboundPortSsl, "database.northbound.port.ssl", 6631, "ovs NB db network socket secure port.")
-	flag.IntVar(&databaseNorthboundPortRaft, "database.northbound.port.raft", 6643, "ovs NB db network port for clustering (raft)")
-
-	flag.StringVar(&databaseSouthboundName, "database.southbound.name", "ovs_Southbound", "The name of ovs SB (southbound) db.")
-	flag.StringVar(&databaseSouthboundSocketRemote, "database.southbound.socket.remote", "unix:/run/openvswitch/ovssb_db.sock", "JSON-RPC unix socket to ovs SB db.")
-	flag.StringVar(&databaseSouthboundSocketControl, "database.southbound.socket.control", "unix:/run/openvswitch/ovssb_db.ctl", "JSON-RPC unix socket to ovs SB app.")
-	flag.StringVar(&databaseSouthboundFileDataPath, "database.southbound.file.data.path", "/var/lib/openvswitch/ovssb_db.db", "ovs SB db file.")
-	flag.StringVar(&databaseSouthboundFileLogPath, "database.southbound.file.log.path", "/var/log/openvswitch/ovsdb-server-sb.log", "ovs SB db log file.")
-	flag.StringVar(&databaseSouthboundFilePidPath, "database.southbound.file.pid.path", "/run/openvswitch/ovssb_db.pid", "ovs SB db process id file.")
-	flag.IntVar(&databaseSouthboundPortDefault, "database.southbound.port.default", 6642, "ovs SB db network socket port.")
-	flag.IntVar(&databaseSouthboundPortSsl, "database.southbound.port.ssl", 6632, "ovs SB db network socket secure port.")
-	flag.IntVar(&databaseSouthboundPortRaft, "database.southbound.port.raft", 6644, "ovs SB db network port for clustering (raft)")
-
 	flag.StringVar(&serviceVswitchdFileLogPath, "service.vswitchd.file.log.path", "/var/log/openvswitch/ovs-vswitchd.log", "OVS vswitchd daemon log file.")
 	flag.StringVar(&serviceVswitchdFilePidPath, "service.vswitchd.file.pid.path", "/var/run/openvswitch/ovs-vswitchd.pid", "OVS vswitchd daemon process id file.")
 
-	flag.StringVar(&serviceNorthdFileLogPath, "service.ovs.northd.file.log.path", "/var/log/openvswitch/ovs-northd.log", "ovs northd daemon log file.")
-	flag.StringVar(&serviceNorthdFilePidPath, "service.ovs.northd.file.pid.path", "/run/openvswitch/ovs-northd.pid", "ovs northd daemon process id file.")
-
 	var usageHelp = func() {
-		fmt.Fprintf(os.Stderr, "\n%s - Prometheus Exporter for Open Virtual Network (ovs)\n\n", ovs.GetExporterName())
+		fmt.Fprintf(os.Stderr, "\n%s - Prometheus Exporter for Open VSwitvh (ovs)\n\n", ovs.GetExporterName())
 		fmt.Fprintf(os.Stderr, "Usage: %s [arguments]\n\n", ovs.GetExporterName())
 		flag.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nDocumentation: https://github.com/forward53/ovs_exporter/\n\n")
+		fmt.Fprintf(os.Stderr, "\nDocumentation: https://github.com/kongseokhwan/hellios-prometheus-exporter/\n\n")
 	}
 	flag.Usage = usageHelp
 	flag.Parse()
