@@ -2,12 +2,12 @@
 set -e
 set -x
 
-MYAPP=ovn-exporter
-MYAPP_USER=ovn_exporter
-MYAPP_GROUP=ovn_exporter
-MYAPP_SERVICE=ovn-exporter
-MYAPP_BIN=/usr/sbin/ovn-exporter
-MYAPP_DESCRIPTION="Prometheus OVN Exporter"
+MYAPP=ovs-exporter
+MYAPP_USER=ovs_exporter
+MYAPP_GROUP=ovs_exporter
+MYAPP_SERVICE=ovs-exporter
+MYAPP_BIN=/usr/sbin/ovs-exporter
+MYAPP_DESCRIPTION="Prometheus OVS Exporter"
 MYAPP_CONF="/etc/sysconfig/${MYAPP_SERVICE}"
 
 if [ -f "./${MYAPP}" ]; then
