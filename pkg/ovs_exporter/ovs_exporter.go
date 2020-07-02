@@ -18,6 +18,8 @@ import (
 	//"github.com/davecgh/go-spew/spew"
 	"fmt"
 	_ "net/http/pprof"
+	"os/exec"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -52,6 +54,21 @@ var (
 		"Number of packets received on a network interface, in bytes.",
 		[]string{"port"},
 		nil)
+	InterfaceRxDroppedDesc = prometheus.NewDesc(
+		prometheus.BuildFQName("ovs", "interface", "receive_drop_total"),
+		"Number of packets dropped on a network interface, in counts.",
+		[]string{"port"},
+		nil)
+	InterfaceRxErrorsDesc = prometheus.NewDesc(
+		prometheus.BuildFQName("ovs", "interface", "receive_errors_total"),
+		"Number of packets errored on a network interface, in counts.",
+		[]string{"port"},
+		nil)
+	InterfaceRxCRCDesc = prometheus.NewDesc(
+		prometheus.BuildFQName("ovs", "interface", "receive_crc_total"),
+		"Number of CRC on a network interface, in counts.",
+		[]string{"port"},
+		nil)
 	InterfaceTxBytesDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ovs", "interface", "transmit_bytes_total"),
 		"Number of bytes sent on a network interface, in bytes.",
@@ -61,6 +78,32 @@ var (
 		prometheus.BuildFQName("ovs", "interface", "transmit_packets_total"),
 		"Number of packets sent on a network interface, in bytes.",
 		[]string{"port"},
+		nil)
+	InterfaceTxDroppedDesc = prometheus.NewDesc(
+		prometheus.BuildFQName("ovs", "interface", "transmit_drop_total"),
+		"Number of packets dropped on a network interface, in counts.",
+		[]string{"port"},
+		nil)
+	InterfaceTxErrorsDesc = prometheus.NewDesc(
+		prometheus.BuildFQName("ovs", "interface", "transmit_errors_total"),
+		"Number of packets errored on a network interface, in counts.",
+		[]string{"port"},
+		nil)
+	InterfaceTxCollisionsDesc = prometheus.NewDesc(
+		prometheus.BuildFQName("ovs", "interface", "transmit_collisions_total"),
+		"Number of Collisions on a network interface, in counts.",
+		[]string{"port"},
+		nil)
+	// TODO : Flow case, key : switchName, flowInformations
+	FlowPktsDesc = prometheus.NewDesc(
+		prometheus.BuildFQName("ovs", "flow", "flow_packtes_total"),
+		"Number of packets on a flow, in counts.",
+		[]string{"bridge", "flow"},
+		nil)
+	FlowBytesDesc = prometheus.NewDesc(
+		prometheus.BuildFQName("ovs", "flow", "flow_bytes_total"),
+		"Number of bytes on a flow, in counts.",
+		[]string{"bridge", "flow"},
 		nil)
 )
 
@@ -75,6 +118,12 @@ type Exporter struct {
 	errorsLocker         sync.RWMutex
 	nextCollectionTicker int64
 	metrics              []prometheus.Metric
+}
+
+type SwitchFlowStats struct {
+	BrigeName string
+	Flow      *ovs.Flow
+	FlowStats *ovs.FlowStats
 }
 
 type Options struct {
@@ -109,8 +158,16 @@ func NewExporter(opts Options) (*Exporter, error) {
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- InterfaceRxBytesDesc
 	ch <- InterfaceRxPacketsDesc
+	ch <- InterfaceRxCRCDesc
+	ch <- InterfaceRxDroppedDesc
+	ch <- InterfaceRxErrorsDesc
 	ch <- InterfaceTxBytesDesc
 	ch <- InterfaceTxPacketsDesc
+	ch <- InterfaceTxCollisionsDesc
+	ch <- InterfaceTxDroppedDesc
+	ch <- InterfaceTxErrorsDesc
+	ch <- FlowBytesDesc
+	ch <- FlowPktsDesc
 }
 
 // IncrementErrorCounter increases the counter of failed queries
@@ -151,14 +208,58 @@ func (e *Exporter) GatherMetrics() {
 		log.Debug("GatherMetrics() cleared metrics")
 	}
 
-	var err error
+	var ovsBridges []string
+	var portStats []*ovs.PortStats
+	var flows []*ovs.Flow
+	var flowStats []SwitchFlowStats
+	var tables []*ovs.Table
 
-	ports, err := e.Client.OpenFlow.DumpPorts("br0")
-	if err != nil {
-		log.Error(err)
+	// 1. get whole switches use go net link library
+	// construct `go version` command
+	cmd := exec.Command("sudo", "ovs-vsctl", "list-br")
+
+	// run command
+	if bridges, errC := cmd.Output(); errC != nil {
+		fmt.Println("Error:", errC)
+	} else {
+		// parse & translate & string & push to
+		fmt.Printf("Otuput: %s\n", bridges)
+		tmpBridges := string(bridges)
+		ovsBridges = strings.Fields(tmpBridges)
 	}
 
-	for _, i := range ports {
+	for _, br := range ovsBridges {
+		brPorts, err := e.Client.OpenFlow.DumpPorts(br)
+		if err != nil {
+			log.Error(err)
+		} else {
+			portStats = append(portStats, brPorts...)
+		}
+
+		// 2. Create SwithFlowStats Slice with Flow & BridgeName
+		brFlows, err := e.Client.OpenFlow.DumpFlows(br)
+		if err != nil {
+			log.Error(err)
+		} else {
+			for _, flow := range brFlows {
+				var tmpFlowStat SwitchFlowStats
+				tmpFlowStat.Flow = flow
+				tmpFlowStat.BrigeName = br
+				flowStats = append(flowStats, tmpFlowStat)
+			}
+			flows = append(flows, brFlows...)
+		}
+
+		brTables, err := e.Client.OpenFlow.DumpTables(br)
+		if err != nil {
+			log.Error(err)
+		} else {
+			tables = append(tables, brTables...)
+		}
+	}
+
+	// 2. get whole port statistics
+	for _, i := range portStats {
 		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
 			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
 			// "Number of bytes received on a network interface, in bytes.",
@@ -189,6 +290,42 @@ func (e *Exporter) GatherMetrics() {
 			// "Number of bytes received on  a network interface, in bytes.",
 			// []string{"port"},
 			// nil)
+			InterfaceRxCRCDesc,
+			prometheus.CounterValue,
+			float64(i.Received.CRC),
+			fmt.Sprintf("%v", i.PortID),
+		))
+		log.Debug("%s: GatherMetrics() completed GetInterfaceRxCRC")
+
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
+			// "Number of bytes received on  a network interface, in bytes.",
+			// []string{"port"},
+			// nil)
+			InterfaceRxDroppedDesc,
+			prometheus.CounterValue,
+			float64(i.Received.Dropped),
+			fmt.Sprintf("%v", i.PortID),
+		))
+		log.Debug("%s: GatherMetrics() completed GetInterfaceRxDropped")
+
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
+			// "Number of bytes received on  a network interface, in bytes.",
+			// []string{"port"},
+			// nil)
+			InterfaceRxErrorsDesc,
+			prometheus.CounterValue,
+			float64(i.Received.Errors),
+			fmt.Sprintf("%v", i.PortID),
+		))
+		log.Debug("%s: GatherMetrics() completed GetInterfaceRxErrors")
+
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
+			// "Number of bytes received on  a network interface, in bytes.",
+			// []string{"port"},
+			// nil)
 			InterfaceTxBytesDesc,
 			prometheus.CounterValue,
 			float64(i.Transmitted.Bytes),
@@ -207,6 +344,77 @@ func (e *Exporter) GatherMetrics() {
 			fmt.Sprintf("%v", i.PortID),
 		))
 		log.Debug("%s: GatherMetrics() completed GetInterfaceTxPackets")
+
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
+			// "Number of bytes received on  a network interface, in bytes.",
+			// []string{"port"},
+			// nil)
+			InterfaceTxCollisionsDesc,
+			prometheus.CounterValue,
+			float64(i.Transmitted.Collisions),
+			fmt.Sprintf("%v", i.PortID),
+		))
+		log.Debug("%s: GatherMetrics() completed GetInterfaceTxCollisions")
+
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
+			// "Number of bytes received on  a network interface, in bytes.",
+			// []string{"port"},
+			// nil)
+			InterfaceTxDroppedDesc,
+			prometheus.CounterValue,
+			float64(i.Transmitted.Dropped),
+			fmt.Sprintf("%v", i.PortID),
+		))
+		log.Debug("%s: GatherMetrics() completed GetInterfaceTxDropped")
+
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
+			// "Number of bytes received on  a network interface, in bytes.",
+			// []string{"port"},
+			// nil)
+			InterfaceTxErrorsDesc,
+			prometheus.CounterValue,
+			float64(i.Transmitted.Errors),
+			fmt.Sprintf("%v", i.PortID),
+		))
+		log.Debug("%s: GatherMetrics() completed GetInterfaceTxErrors")
+	}
+
+	//3. Make FlowStats
+	for _, fl := range flowStats {
+		stats, _ := e.Client.OpenFlow.DumpAggregate(fl.BrigeName, fl.Flow.MatchFlow())
+		fl.FlowStats = stats
+
+		flowText, _ := fl.Flow.MarshalText()
+
+		//MustNewConstMetric(desc *Desc, valueType ValueType, value float64, labelValues ...string) Metric {
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
+			// "Number of bytes received on a network interface, in bytes.",
+			// []string{"port"},
+			// nil)
+			FlowBytesDesc,
+			prometheus.CounterValue,
+			float64(fl.FlowStats.ByteCount),
+			fmt.Sprintf("%s", fl.BrigeName),
+			fmt.Sprintf("%s", flowText),
+		))
+		log.Debug("%s: GatherMetrics() completed GetInterfaceRxBytes")
+
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
+			// "Number of bytes received on  a network interface, in bytes.",
+			// []string{"port"},
+			// nil)
+			FlowPktsDesc,
+			prometheus.CounterValue,
+			float64(fl.FlowStats.PacketCount),
+			fmt.Sprintf("%s", fl.BrigeName),
+			fmt.Sprintf("%s", flowText),
+		))
+		log.Debug("%s: GatherMetrics() completed GetInterfaceRxPackets")
 	}
 
 	e.nextCollectionTicker = time.Now().Add(time.Duration(e.pollInterval) * time.Second).Unix()
