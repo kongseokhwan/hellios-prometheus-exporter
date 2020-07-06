@@ -294,6 +294,7 @@ func (e *Exporter) GatherMetrics() {
 			InterfaceRxBytesDesc,
 			prometheus.CounterValue,
 			float64(i.PortStats.Received.Bytes),
+			i.BrigeName,
 			// []string{"port"},
 			fmt.Sprintf("%v", i.PortStats.PortID),
 		))
@@ -307,6 +308,7 @@ func (e *Exporter) GatherMetrics() {
 			InterfaceRxPacketsDesc,
 			prometheus.CounterValue,
 			float64(i.PortStats.Received.Packets),
+			i.BrigeName,
 			fmt.Sprintf("%v", i.PortStats.PortID),
 		))
 		log.Debugf("%v: GatherMetrics() completed GetInterfaceRxPackets", i.PortStats.PortID)
@@ -319,6 +321,7 @@ func (e *Exporter) GatherMetrics() {
 			InterfaceRxCRCDesc,
 			prometheus.CounterValue,
 			float64(i.PortStats.Received.CRC),
+			i.BrigeName,
 			fmt.Sprintf("%v", i.PortStats.PortID),
 		))
 		log.Debugf("%v: GatherMetrics() completed GetInterfaceRxCRC", i.PortStats.PortID)
@@ -331,6 +334,7 @@ func (e *Exporter) GatherMetrics() {
 			InterfaceRxDroppedDesc,
 			prometheus.CounterValue,
 			float64(i.PortStats.Received.Dropped),
+			i.BrigeName,
 			fmt.Sprintf("%v", i.PortStats.PortID),
 		))
 		log.Debugf("%v: GatherMetrics() completed GetInterfaceRxDropped", i.PortStats.PortID)
@@ -343,6 +347,7 @@ func (e *Exporter) GatherMetrics() {
 			InterfaceRxErrorsDesc,
 			prometheus.CounterValue,
 			float64(i.PortStats.Received.Errors),
+			i.BrigeName,
 			fmt.Sprintf("%v", i.PortStats.PortID),
 		))
 		log.Debugf("%v: GatherMetrics() completed GetInterfaceRxErrors", i.PortStats.PortID)
@@ -355,6 +360,7 @@ func (e *Exporter) GatherMetrics() {
 			InterfaceTxBytesDesc,
 			prometheus.CounterValue,
 			float64(i.PortStats.Transmitted.Bytes),
+			i.BrigeName,
 			fmt.Sprintf("%v", i.PortStats.PortID),
 		))
 		log.Debugf("%v: GatherMetrics() completed GetInterfaceTxBytes", i.PortStats.PortID)
@@ -367,6 +373,7 @@ func (e *Exporter) GatherMetrics() {
 			InterfaceTxPacketsDesc,
 			prometheus.CounterValue,
 			float64(i.PortStats.Transmitted.Packets),
+			i.BrigeName,
 			fmt.Sprintf("%v", i.PortStats.PortID),
 		))
 		log.Debugf("%v: GatherMetrics() completed GetInterfaceTxPackets", i.PortStats.PortID)
@@ -379,6 +386,7 @@ func (e *Exporter) GatherMetrics() {
 			InterfaceTxCollisionsDesc,
 			prometheus.CounterValue,
 			float64(i.PortStats.Transmitted.Collisions),
+			i.BrigeName,
 			fmt.Sprintf("%v", i.PortStats.PortID),
 		))
 		log.Debugf("%v: GatherMetrics() completed GetInterfaceTxCollisions", i.PortStats.PortID)
@@ -391,6 +399,7 @@ func (e *Exporter) GatherMetrics() {
 			InterfaceTxDroppedDesc,
 			prometheus.CounterValue,
 			float64(i.PortStats.Transmitted.Dropped),
+			i.BrigeName,
 			fmt.Sprintf("%v", i.PortStats.PortID),
 		))
 		log.Debugf("%v: GatherMetrics() completed GetInterfaceTxDropped", i.PortStats.PortID)
@@ -403,6 +412,7 @@ func (e *Exporter) GatherMetrics() {
 			InterfaceTxErrorsDesc,
 			prometheus.CounterValue,
 			float64(i.PortStats.Transmitted.Errors),
+			i.BrigeName,
 			fmt.Sprintf("%v", i.PortStats.PortID),
 		))
 		log.Debugf("%v: GatherMetrics() completed GetInterfaceTxErrors", i.PortStats.PortID)
