@@ -130,6 +130,17 @@ type Options struct {
 	Timeout int
 }
 
+func portFilter(ports []*ovs.PortStats, f func(*ovs.PortStats) bool) []*ovs.PortStats {
+	portStats := make([]*ovs.PortStats, 0)
+
+	for _, v := range ports {
+		if f(v) {
+			portStats = append(portStats, v)
+		}
+	}
+	return portStats
+}
+
 // NewExporter returns an initialized Exporter.
 func NewExporter(opts Options) (*Exporter, error) {
 	version.Version = appVersion
@@ -229,11 +240,16 @@ func (e *Exporter) GatherMetrics() {
 	}
 
 	for _, br := range ovsBridges {
+		log.Debugf("Bridge Name : %s\n", br)
 		brPorts, err := e.Client.OpenFlow.DumpPorts(br)
 		if err != nil {
 			log.Error(err)
 		} else {
-			portStats = append(portStats, brPorts...)
+			filteredPortStats := portFilter(brPorts, func(val *ovs.PortStats) bool {
+				return val.PortID > 0
+			})
+			//portStats = append(portStats, brPorts...)
+			portStats = append(portStats, filteredPortStats...)
 		}
 
 		// 2. Create SwithFlowStats Slice with Flow & BridgeName
@@ -331,7 +347,7 @@ func (e *Exporter) GatherMetrics() {
 			float64(i.Transmitted.Bytes),
 			fmt.Sprintf("%v", i.PortID),
 		))
-		log.Debugf("%s: GatherMetrics() completed GetInterfaceTxBytes")
+		log.Debugf("%s: GatherMetrics() completed GetInterfaceTxBytes", i.Transmitted.Bytes)
 
 		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
 			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
@@ -343,7 +359,7 @@ func (e *Exporter) GatherMetrics() {
 			float64(i.Transmitted.Packets),
 			fmt.Sprintf("%v", i.PortID),
 		))
-		log.Debugf("%s: GatherMetrics() completed GetInterfaceTxPackets")
+		log.Debugf("%s: GatherMetrics() completed GetInterfaceTxPackets", i.Transmitted.Packets)
 
 		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
 			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
@@ -355,7 +371,7 @@ func (e *Exporter) GatherMetrics() {
 			float64(i.Transmitted.Collisions),
 			fmt.Sprintf("%v", i.PortID),
 		))
-		log.Debugf("%s: GatherMetrics() completed GetInterfaceTxCollisions")
+		log.Debugf("%s: GatherMetrics() completed GetInterfaceTxCollisions", i.Transmitted.Collisions)
 
 		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
 			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
@@ -367,7 +383,7 @@ func (e *Exporter) GatherMetrics() {
 			float64(i.Transmitted.Dropped),
 			fmt.Sprintf("%v", i.PortID),
 		))
-		log.Debugf("%s: GatherMetrics() completed GetInterfaceTxDropped")
+		log.Debugf("%s: GatherMetrics() completed GetInterfaceTxDropped", i.Transmitted.Dropped)
 
 		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
 			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
@@ -379,7 +395,7 @@ func (e *Exporter) GatherMetrics() {
 			float64(i.Transmitted.Errors),
 			fmt.Sprintf("%v", i.PortID),
 		))
-		log.Debugf("%s: GatherMetrics() completed GetInterfaceTxErrors")
+		log.Debugf("%s: GatherMetrics() completed GetInterfaceTxErrors", i.Transmitted.Errors)
 	}
 
 	//3. Make FlowStats
@@ -401,7 +417,7 @@ func (e *Exporter) GatherMetrics() {
 			fmt.Sprintf("%s", fl.BrigeName),
 			fmt.Sprintf("%s", flowText),
 		))
-		log.Debugf("%s: GatherMetrics() completed GetInterfaceRxBytes")
+		log.Debugf("%s: GatherMetrics() completed GetInterfaceRxBytes", fl.FlowStats.ByteCount)
 
 		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
 			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
@@ -414,7 +430,7 @@ func (e *Exporter) GatherMetrics() {
 			fmt.Sprintf("%s", fl.BrigeName),
 			fmt.Sprintf("%s", flowText),
 		))
-		log.Debugf("%s: GatherMetrics() completed GetInterfaceRxPackets")
+		log.Debugf("%s: GatherMetrics() completed GetInterfaceRxPackets", fl.FlowStats.PacketCount)
 	}
 
 	e.nextCollectionTicker = time.Now().Add(time.Duration(e.pollInterval) * time.Second).Unix()
