@@ -225,7 +225,7 @@ func (e *Exporter) GatherMetrics() {
 		log.Debug("GatherMetrics() cleared metrics")
 	}
 
-	ovsBridges := []string{"tcp:10.1.100.154:6633 -O Openflow13"}
+	ovsBridges := [1]string{br0}
 	//var portStats []*ovs.PortStats
 	var portStats []SwitchPortStats
 	var flows []*ovs.Flow
@@ -250,7 +250,8 @@ func (e *Exporter) GatherMetrics() {
 
 	for _, br := range ovsBridges {
 		log.Debugf("Bridge Name : %s\n", br)
-		brPorts, err := e.Client.OpenFlow.DumpPorts(br)
+		//brPorts, err := e.Client.OpenFlow.DumpPorts(br)
+		brPorts, err := e.Client.OpenFlow.DumpPorts("")
 		if err != nil {
 			log.Error(err)
 		}
@@ -267,7 +268,8 @@ func (e *Exporter) GatherMetrics() {
 		}
 
 		// 2. Create SwithFlowStats Slice with Flow & BridgeName
-		brFlows, err := e.Client.OpenFlow.DumpFlows(br)
+		//brFlows, err := e.Client.OpenFlow.DumpFlows(br)
+		brFlows, err := e.Client.OpenFlow.DumpFlows("")
 		if err != nil {
 			log.Error(err)
 		} else {
@@ -280,7 +282,8 @@ func (e *Exporter) GatherMetrics() {
 			flows = append(flows, brFlows...)
 		}
 
-		brTables, err := e.Client.OpenFlow.DumpTables(br)
+		//brTables, err := e.Client.OpenFlow.DumpTables(br)
+		brTables, err := e.Client.OpenFlow.DumpTables("")
 		if err != nil {
 			log.Error(err)
 		} else {
