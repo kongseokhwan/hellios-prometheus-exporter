@@ -156,11 +156,14 @@ func NewExporter(opts Options) (*Exporter, error) {
 	// TODO : Change to Hellios Client
 	client := ovs.New()
 	e.Client = client
-	//bridges, err := e.Client.VSwitch.ListBridges()
+	/*
+		bridges, err := e.Client.VSwitch.ListBridges()
+		if err != nil {
+			log.Error(err)
+		}
+	*/
 	bridges := "tcp:10.1.100.154:6633 -O Openflow13"
-	if err != nil {
-		log.Error(err)
-	}
+
 	log.Debugf("%s: NewExporter() calls ListBridges()", bridges)
 	log.Debug("NewExporter() initialized successfully")
 	return &e, nil
