@@ -18,8 +18,6 @@ import (
 	//"github.com/davecgh/go-spew/spew"
 	"fmt"
 	_ "net/http/pprof"
-	"os/exec"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -223,7 +221,7 @@ func (e *Exporter) GatherMetrics() {
 		log.Debug("GatherMetrics() cleared metrics")
 	}
 
-	var ovsBridges []string
+	ovsBridges := []string{"tcp:10.1.100.154:6633 -O Openflow13"}
 	//var portStats []*ovs.PortStats
 	var portStats []SwitchPortStats
 	var flows []*ovs.Flow
@@ -232,17 +230,19 @@ func (e *Exporter) GatherMetrics() {
 
 	// 1. get whole switches use go net link library
 	// construct `go version` command
-	cmd := exec.Command("sudo", "ovs-vsctl", "list-br")
+	/*
+		cmd := exec.Command("sudo", "ovs-vsctl", "list-br")
 
-	// run command
-	if bridges, errC := cmd.Output(); errC != nil {
-		log.Debugf("Error: %n", errC)
-	} else {
-		// parse & translate & string & push to
-		log.Debugf("Otuput: %s\n", bridges)
-		tmpBridges := string(bridges)
-		ovsBridges = strings.Fields(tmpBridges)
-	}
+		// run command
+		if bridges, errC := cmd.Output(); errC != nil {
+			log.Debugf("Error: %n", errC)
+		} else {
+			// parse & translate & string & push to
+			log.Debugf("Otuput: %s\n", bridges)
+			tmpBridges := string(bridges)
+			ovsBridges = strings.Fields(tmpBridges)
+		}
+	*/
 
 	for _, br := range ovsBridges {
 		log.Debugf("Bridge Name : %s\n", br)
