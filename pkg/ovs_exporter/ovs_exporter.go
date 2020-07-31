@@ -154,7 +154,12 @@ func NewExporter(opts Options) (*Exporter, error) {
 		timeout: opts.Timeout,
 	}
 	// TODO : Change to Hellios Client
-	client := ovs.New()
+	options := []ovs.OptionFunc{
+		ovs.Protocols([]string{"OpenFlow13"}),
+		ovs.SetTCPParam("10.1.100.154:6633"),
+	}
+
+	client := ovs.New(options...)
 	e.Client = client
 	/*
 		bridges, err := e.Client.VSwitch.ListBridges()
@@ -162,7 +167,7 @@ func NewExporter(opts Options) (*Exporter, error) {
 			log.Error(err)
 		}
 	*/
-	bridges := "tcp:10.1.100.154:6633 -O Openflow13"
+	bridges := "br0"
 
 	log.Debugf("%s: NewExporter() calls ListBridges()", bridges)
 	log.Debug("NewExporter() initialized successfully")
@@ -225,7 +230,7 @@ func (e *Exporter) GatherMetrics() {
 		log.Debug("GatherMetrics() cleared metrics")
 	}
 
-	ovsBridges := [1]string{br0}
+	ovsBridges := [1]string{"br0"}
 	//var portStats []*ovs.PortStats
 	var portStats []SwitchPortStats
 	var flows []*ovs.Flow
