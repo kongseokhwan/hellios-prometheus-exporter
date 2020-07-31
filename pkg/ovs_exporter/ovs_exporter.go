@@ -230,7 +230,7 @@ func (e *Exporter) GatherMetrics() {
 		log.Debug("GatherMetrics() cleared metrics")
 	}
 
-	ovsBridges := [1]string{"btcp:10.1.100.154:6633"}
+	ovsBridges := [1]string{"tcp:10.1.100.154:6633"}
 	//var portStats []*ovs.PortStats
 	var portStats []SwitchPortStats
 	var flows []*ovs.Flow
