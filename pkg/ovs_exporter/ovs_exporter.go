@@ -156,7 +156,7 @@ func NewExporter(opts Options) (*Exporter, error) {
 	// TODO : Change to Hellios Client
 	options := []ovs.OptionFunc{
 		ovs.Protocols([]string{"OpenFlow13"}),
-		ovs.SetTCPParam("10.1.100.154:6633"),
+		//ovs.SetTCPParam("10.1.100.154:6633"),
 	}
 
 	client := ovs.New(options...)
@@ -167,7 +167,7 @@ func NewExporter(opts Options) (*Exporter, error) {
 			log.Error(err)
 		}
 	*/
-	bridges := "br0"
+	bridges := "tcp:10.1.100.154:6633"
 
 	log.Debugf("%s: NewExporter() calls ListBridges()", bridges)
 	log.Debug("NewExporter() initialized successfully")
@@ -230,7 +230,7 @@ func (e *Exporter) GatherMetrics() {
 		log.Debug("GatherMetrics() cleared metrics")
 	}
 
-	ovsBridges := [1]string{"br0"}
+	ovsBridges := [1]string{"btcp:10.1.100.154:6633"}
 	//var portStats []*ovs.PortStats
 	var portStats []SwitchPortStats
 	var flows []*ovs.Flow
@@ -256,7 +256,7 @@ func (e *Exporter) GatherMetrics() {
 	for _, br := range ovsBridges {
 		log.Debugf("Bridge Name : %s\n", br)
 		//brPorts, err := e.Client.OpenFlow.DumpPorts(br)
-		brPorts, err := e.Client.OpenFlow.DumpPorts("")
+		brPorts, err := e.Client.OpenFlow.DumpPorts(br)
 		if err != nil {
 			log.Error(err)
 		}
@@ -274,7 +274,7 @@ func (e *Exporter) GatherMetrics() {
 
 		// 2. Create SwithFlowStats Slice with Flow & BridgeName
 		//brFlows, err := e.Client.OpenFlow.DumpFlows(br)
-		brFlows, err := e.Client.OpenFlow.DumpFlows("")
+		brFlows, err := e.Client.OpenFlow.DumpFlows(br)
 		if err != nil {
 			log.Error(err)
 		} else {
@@ -288,7 +288,7 @@ func (e *Exporter) GatherMetrics() {
 		}
 
 		//brTables, err := e.Client.OpenFlow.DumpTables(br)
-		brTables, err := e.Client.OpenFlow.DumpTables("")
+		brTables, err := e.Client.OpenFlow.DumpTables(br)
 		if err != nil {
 			log.Error(err)
 		} else {
