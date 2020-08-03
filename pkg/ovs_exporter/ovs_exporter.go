@@ -32,6 +32,13 @@ const (
 	namespace = "ovs"
 )
 
+var Config = struct {
+	Switches []struct {
+		IP   string `required:"true"`
+		Port string `required:"true"`
+	}
+}{}
+
 var (
 	appName    = "ovs-exporter"
 	appVersion = "[untracked]"
@@ -230,11 +237,15 @@ func (e *Exporter) GatherMetrics() {
 		log.Debug("GatherMetrics() cleared metrics")
 	}
 
+	// TODO : Implement Config Parser
+	// configor.Load(&Config, "/etc/helios/config.yml")
+	// switches := fmt.Sprintf("tcp:%s:%s", Config.Switches)
+
 	ovsBridges := [1]string{"tcp:10.1.100.154:6633"}
 	//var portStats []*ovs.PortStats
 	var portStats []SwitchPortStats
-	// var flows []*ovs.Flow
-	// var flowStats []SwitchFlowStats
+	var flows []*ovs.Flow
+	var flowStats []SwitchFlowStats
 	// var tables []*ovs.Table
 
 	// 1. get whole switches use go net link library
@@ -255,7 +266,6 @@ func (e *Exporter) GatherMetrics() {
 
 	for _, br := range ovsBridges {
 		log.Debugf("Bridge Name : %s\n", br)
-		//brPorts, err := e.Client.OpenFlow.DumpPorts(br)
 		brPorts, err := e.Client.OpenFlow.DumpPorts(br)
 		if err != nil {
 			log.Error(err)
@@ -273,21 +283,19 @@ func (e *Exporter) GatherMetrics() {
 		}
 
 		// 2. Create SwithFlowStats Slice with Flow & BridgeName
-		//brFlows, err := e.Client.OpenFlow.DumpFlows(br)
-		/*
-			brFlows, err := e.Client.OpenFlow.DumpFlows(br)
-			if err != nil {
-				log.Error(err)
-			} else {
-				for _, flow := range brFlows {
-					var tmpFlowStat SwitchFlowStats
-					tmpFlowStat.Flow = flow
-					tmpFlowStat.BrigeName = br
-					flowStats = append(flowStats, tmpFlowStat)
-				}
-				flows = append(flows, brFlows...)
+
+		brFlows, err := e.Client.OpenFlow.DumpFlows(br)
+		if err != nil {
+			log.Error(err)
+		} else {
+			for _, flow := range brFlows {
+				var tmpFlowStat SwitchFlowStats
+				tmpFlowStat.Flow = flow
+				tmpFlowStat.BrigeName = br
+				flowStats = append(flowStats, tmpFlowStat)
 			}
-		*/
+			flows = append(flows, brFlows...)
+		}
 
 		//brTables, err := e.Client.OpenFlow.DumpTables(br)
 		/*
@@ -435,41 +443,39 @@ func (e *Exporter) GatherMetrics() {
 	}
 
 	//3. Make FlowStats
-	/*
-		for _, fl := range flowStats {
-			stats, _ := e.Client.OpenFlow.DumpAggregate(fl.BrigeName, fl.Flow.MatchFlow())
-			fl.FlowStats = stats
+	for _, fl := range flowStats {
+		stats, _ := e.Client.OpenFlow.DumpAggregate(fl.BrigeName, fl.Flow.MatchFlow())
+		fl.FlowStats = stats
 
-			flowText, _ := fl.Flow.MarshalText()
+		flowText, _ := fl.Flow.MarshalText()
 
-			//MustNewConstMetric(desc *Desc, valueType ValueType, value float64, labelValues ...string) Metric {
-			e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
-				// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
-				// "Number of bytes received on a network interface, in bytes.",
-				// []string{"port"},
-				// nil)
-				FlowBytesDesc,
-				prometheus.CounterValue,
-				float64(fl.FlowStats.ByteCount),
-				fmt.Sprintf("%s", fl.BrigeName),
-				fmt.Sprintf("%s", flowText),
-			))
-			log.Debugf("%s: GatherMetrics() completed GetInterfaceRxBytes", flowText)
+		//MustNewConstMetric(desc *Desc, valueType ValueType, value float64, labelValues ...string) Metric {
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
+			// "Number of bytes received on a network interface, in bytes.",
+			// []string{"port"},
+			// nil)
+			FlowBytesDesc,
+			prometheus.CounterValue,
+			float64(fl.FlowStats.ByteCount),
+			fmt.Sprintf("%s", fl.BrigeName),
+			fmt.Sprintf("%s", flowText),
+		))
+		log.Debugf("%s: GatherMetrics() completed GetInterfaceRxBytes", flowText)
 
-			e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
-				// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
-				// "Number of bytes received on  a network interface, in bytes.",
-				// []string{"port"},
-				// nil)
-				FlowPktsDesc,
-				prometheus.CounterValue,
-				float64(fl.FlowStats.PacketCount),
-				fmt.Sprintf("%s", fl.BrigeName),
-				fmt.Sprintf("%s", flowText),
-			))
-			log.Debugf("%s: GatherMetrics() completed GetInterfaceRxPackets", flowText)
-		}
-	*/
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			// prometheus.BuildFQName("ovs", "interface", "receive_bytes_total"),
+			// "Number of bytes received on  a network interface, in bytes.",
+			// []string{"port"},
+			// nil)
+			FlowPktsDesc,
+			prometheus.CounterValue,
+			float64(fl.FlowStats.PacketCount),
+			fmt.Sprintf("%s", fl.BrigeName),
+			fmt.Sprintf("%s", flowText),
+		))
+		log.Debugf("%s: GatherMetrics() completed GetInterfaceRxPackets", flowText)
+	}
 
 	e.nextCollectionTicker = time.Now().Add(time.Duration(e.pollInterval) * time.Second).Unix()
 

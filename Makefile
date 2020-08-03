@@ -13,6 +13,8 @@ all:
 	@echo "Version: $(APP_VERSION), Branch: $(GIT_BRANCH), Revision: $(GIT_COMMIT)"
 	@echo "Build on $(BUILD_DATE) by $(BUILD_USER)"
 	@mkdir -p bin/
+	@mkdir -p /etc/helios
+	@cp ./config/config.yml /etc/helios
 	@rm -rf ./bin/*
 	@CGO_ENABLED=0 go build -o ./bin/$(BINARY) $(VERBOSE) \
 		-ldflags="-w -s \
