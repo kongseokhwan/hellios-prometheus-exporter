@@ -446,8 +446,8 @@ func (e *Exporter) GatherMetrics() {
 
 	//3. Make FlowStats
 	for _, fl := range flowStats {
-		stats, _ := e.Client.OpenFlow.DumpAggregate(fl.BrigeName, fl.Flow.MatchFlow())
-		fl.FlowStats = stats
+		//stats, _ := e.Client.OpenFlow.DumpAggregate(fl.BrigeName, fl.Flow.MatchFlow())
+		//fl.FlowStats = stats
 
 		flowText, _ := fl.Flow.MarshalText()
 
@@ -459,7 +459,8 @@ func (e *Exporter) GatherMetrics() {
 			// nil)
 			FlowBytesDesc,
 			prometheus.CounterValue,
-			float64(fl.FlowStats.ByteCount),
+			//float64(fl.FlowStats.ByteCount),
+			float64(0),
 			fmt.Sprintf("%s", fl.BrigeName),
 			fmt.Sprintf("%s", flowText),
 		))
@@ -472,7 +473,8 @@ func (e *Exporter) GatherMetrics() {
 			// nil)
 			FlowPktsDesc,
 			prometheus.CounterValue,
-			float64(fl.FlowStats.PacketCount),
+			//float64(fl.FlowStats.PacketCount),
+			float64(0),
 			fmt.Sprintf("%s", fl.BrigeName),
 			fmt.Sprintf("%s", flowText),
 		))
