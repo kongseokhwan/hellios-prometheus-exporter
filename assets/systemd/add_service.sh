@@ -32,9 +32,9 @@ fi
 mkdir -p /var/lib/${MYAPP}
 chown -R ${MYAPP_USER}:${MYAPP_GROUP} /var/lib/${MYAPP}
 
-touch /usr/lib/systemd/system/${MYAPP_SERVICE}.service
+touch /etc/systemd/system/${MYAPP_SERVICE}.service
 
-cat << EOF > /usr/lib/systemd/system/${MYAPP_SERVICE}.service
+cat << EOF > /etc/systemd/system/${MYAPP_SERVICE}.service
 [Unit]
 Description=$MYAPP_DESCRIPTION
 After=network.target
