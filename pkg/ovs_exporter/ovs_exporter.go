@@ -175,7 +175,7 @@ func NewExporter(opts Options) (*Exporter, error) {
 			log.Error(err)
 		}
 	*/
-	bridges := "tcp:10.1.100.152:6633"
+	bridges := "tcp:10.1.100.154:6633"
 
 	log.Debugf("%s: NewExporter() calls ListBridges()", bridges)
 	log.Debug("NewExporter() initialized successfully")
@@ -242,7 +242,7 @@ func (e *Exporter) GatherMetrics() {
 	// configor.Load(&Config, "/etc/helios/config.yml")
 	// switches := fmt.Sprintf("tcp:%s:%s", Config.Switches)
 
-	ovsBridges := [1]string{"tcp:10.1.100.152:6633"}
+	ovsBridges := [1]string{"tcp:10.1.100.154:6633"}
 	//var portStats []*ovs.PortStats
 	var portStats []SwitchPortStats
 	var flows []*ovs.Flow
