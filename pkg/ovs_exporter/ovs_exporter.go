@@ -17,6 +17,7 @@ package ovs_exporter
 import (
 	"fmt"
 	_ "net/http/pprof"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -108,7 +109,7 @@ var (
 	FlowBytesDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ovs", "flow", "flow_bytes_total"),
 		"Number of bytes on a flow, in counts.",
-		[]string{"bridge", "flow"},
+		[]string{"bridge", "flow", "id"},
 		nil)
 )
 
@@ -445,7 +446,7 @@ func (e *Exporter) GatherMetrics() {
 	}
 
 	//3. Make FlowStats
-	for _, fl := range flowStats {
+	for index, fl := range flowStats {
 		//stats, _ := e.Client.OpenFlow.DumpAggregate(fl.BrigeName, fl.Flow.MatchFlow())
 		//fl.FlowStats = stats
 
@@ -463,6 +464,7 @@ func (e *Exporter) GatherMetrics() {
 			float64(0),
 			fmt.Sprintf("%s", fl.BrigeName),
 			fmt.Sprintf("%s", flowText),
+			fmt.Sprintf("%s", strconv.Itoa(index)),
 		))
 		log.Debugf("%s: GatherMetrics() completed GetInterfaceRxBytes", flowText)
 
@@ -477,6 +479,7 @@ func (e *Exporter) GatherMetrics() {
 			float64(0),
 			fmt.Sprintf("%s", fl.BrigeName),
 			fmt.Sprintf("%s", flowText),
+			fmt.Sprintf("%s", strconv.Itoa(index)),
 		))
 		log.Debugf("%s: GatherMetrics() completed GetInterfaceRxPackets", flowText)
 	}
