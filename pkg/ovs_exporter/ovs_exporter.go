@@ -460,8 +460,8 @@ func (e *Exporter) GatherMetrics() {
 			// nil)
 			FlowBytesDesc,
 			prometheus.CounterValue,
-			//float64(fl.FlowStats.ByteCount),
-			float64(0),
+			float64(fl.FlowStats.ByteCount),
+			//float64(0),
 			fmt.Sprintf("%s", fl.BrigeName),
 			fmt.Sprintf("%s", flowText),
 			fmt.Sprintf("%s", strconv.Itoa(index)),
@@ -475,8 +475,8 @@ func (e *Exporter) GatherMetrics() {
 			// nil)
 			FlowPktsDesc,
 			prometheus.CounterValue,
-			//float64(fl.FlowStats.PacketCount),
-			float64(0),
+			float64(fl.FlowStats.PacketCount),
+			//float64(0),
 			fmt.Sprintf("%s", fl.BrigeName),
 			fmt.Sprintf("%s", flowText),
 			fmt.Sprintf("%s", strconv.Itoa(index)),
