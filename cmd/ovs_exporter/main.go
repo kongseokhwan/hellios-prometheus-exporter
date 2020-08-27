@@ -28,6 +28,7 @@ func main() {
 	var databaseVswitchFileSystemIDPath string
 	var serviceVswitchdFileLogPath string
 	var serviceVswitchdFilePidPath string
+	var bridgeAddr string
 
 	flag.StringVar(&listenAddress, "web.listen-address", ":9476", "Address to listen on for web interface and telemetry.")
 	flag.StringVar(&metricsPath, "web.telemetry-path", "/metrics", "Path under which to expose metrics.")
@@ -47,6 +48,8 @@ func main() {
 
 	flag.StringVar(&serviceVswitchdFileLogPath, "service.vswitchd.file.log.path", "/var/log/openvswitch/ovs-vswitchd.log", "OVS vswitchd daemon log file.")
 	flag.StringVar(&serviceVswitchdFilePidPath, "service.vswitchd.file.pid.path", "/var/run/openvswitch/ovs-vswitchd.pid", "OVS vswitchd daemon process id file.")
+
+	flag.StringVar(&bridgeAddr, "bridge.addr", "tcp:10.1.100.154:6633", "The address of Helios Bridge")
 
 	var usageHelp = func() {
 		fmt.Fprintf(os.Stderr, "\n%s - Prometheus Exporter for Open VSwitvh (ovs)\n\n", ovs.GetExporterName())
@@ -79,7 +82,7 @@ func main() {
 	log.Infof("Starting %s %s", ovs.GetExporterName(), ovs.GetVersionInfo())
 	log.Infof("Build context %s", ovs.GetVersionBuildContext())
 
-	exporter, err := ovs.NewExporter(opts)
+	exporter, err := ovs.NewExporter(opts, bridgeAddr)
 	if err != nil {
 		log.Errorf("%s failed to init properly: %s", ovs.GetExporterName(), err)
 	}
